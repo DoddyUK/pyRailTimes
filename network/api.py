@@ -4,11 +4,13 @@ import config.credentials as credentials
 
 urlBase = "https://api.rtt.io/api/v1"
 
-def test_call():
-    url = "%s/json/search/SOU" % urlBase
-    auth = HTTPBasicAuth(credentials.username(), credentials.password())
+def fetch_station_info(station):
+    url = "%s/json/search/%s" % (urlBase, station)
+    return __request(url)
 
-    print(url)
+
+def __request(url):
+    auth = HTTPBasicAuth(credentials.username(), credentials.password())
 
     response = requests.get(url, auth=auth)
 
