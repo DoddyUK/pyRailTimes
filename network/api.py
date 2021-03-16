@@ -17,4 +17,4 @@ def __request(url):
     if response.ok:
         return response.json()
     else:
-        return "Request failed"
+        return {}
