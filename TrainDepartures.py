@@ -57,7 +57,7 @@ def mainloop():
         services = parser.all_services(data)
         board.render(services)
         print("%s (%s)" % (station.name, station.code))
-        time.sleep(0.2)
+        time.sleep(0.1)
 
 
 mainloop()
