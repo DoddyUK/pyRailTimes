@@ -30,15 +30,16 @@ def calling_points(data):
 def __services(data):
     out = []
 
-    for service in data['services']:
-        location = service['locationDetail']
-        train = Service(
-            service['serviceUid'],
-            datetime.datetime.strptime(service['runDate'], "%Y-%m-%d").date(),
-            location['gbttBookedDeparture'],
-            location['destination'][0]['description'],
-            location['realtimeDeparture']
-        )
-        out.append(train)
+    if data['services'] is not None:
+        for service in data['services']:
+            location = service['locationDetail']
+            train = Service(
+                service['serviceUid'],
+                datetime.datetime.strptime(service['runDate'], "%Y-%m-%d").date(),
+                location['gbttBookedDeparture'],
+                location['destination'][0]['description'],
+                location['realtimeDeparture']
+            )
+            out.append(train)
 
     return out

@@ -3,6 +3,7 @@ import network.api as api
 import parser.parser
 
 class Board:
+
     lastChange = datetime.datetime.now()
     changeDelta = datetime.timedelta(seconds=5)
 
@@ -17,8 +18,11 @@ class Board:
 
     boxwidth = 70
 
-    def render(self, services, station):
-        self.__check_service_info(services, station)
+    def __init__(self, station):
+        self.station = station
+
+    def render(self, services):
+        self.__check_service_info(services)
 
         header = "│    Time  Destination %s Expected │" % (" " * (self.boxwidth - 34))
         bottom = "└─ %s ─┘".replace('─', '─' * int((self.boxwidth - 12) / 2)) % datetime.datetime.now().strftime("%H:%M:%S")
@@ -41,7 +45,7 @@ class Board:
         print(bottom)
 
 
-    def __check_service_info(self, services, station):
+    def __check_service_info(self, services):
         if len(services) == 0:
             return
 
@@ -59,7 +63,7 @@ class Board:
 
 
             for index, point in enumerate(calling_points):
-                if point.code == station.code:
+                if point.code == self.station.code:
                     stations_togo = calling_points[(index + 1):]
 
 
