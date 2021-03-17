@@ -3,6 +3,7 @@ import datetime
 import network.api as api
 import config.config as config
 import parser.parser as parser
+from display.board import Board
 import time
 import os
 
@@ -14,7 +15,7 @@ updateThreshold = 60
 station = None
 
 columns = 80
-
+board = Board()
 #print(parser.all_services(data))
 
 def update_data():
@@ -42,13 +43,18 @@ def update_columns():
         columns = 80
 
 def mainloop():
-    global station, lastUpdate
+    global station, lastUpdate, data
     while True:
         update_columns()
         update_data()
         clear()
         print_header()
+
+
+        services = parser.all_services(data)
+        board.render(services)
         print("%s (%s)" % (station.name, station.code))
         time.sleep(0.2)
+
 
 mainloop()
