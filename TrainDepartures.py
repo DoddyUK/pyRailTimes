@@ -10,6 +10,7 @@ import os
 # Main body
 data = None
 lastUpdate = None
+changeDelta = datetime.timedelta(minutes=1)
 updateThreshold = 60
 
 station = None
@@ -21,7 +22,9 @@ board = Board()
 def update_data():
     global data, lastUpdate, updateThreshold, station
 
-    if data is None or lastUpdate is None or ((lastUpdate + datetime.timedelta(minutes=1)) < datetime.datetime.now()):
+    if data is None \
+            or lastUpdate is None \
+            or ((lastUpdate + changeDelta) < datetime.datetime.now()):
       data = api.fetch_station_info(config.station())
       lastUpdate = datetime.datetime.now()
       station = parser.station_information(data)
