@@ -88,7 +88,7 @@ class Board:
         if (self.lastChange + self.changeDelta) < datetime.datetime.now():
             self.lastChange = datetime.datetime.now()
             self.serviceCounter = self.serviceCounter + 1
-            if self.serviceCounter == self.additionalServices or self.serviceCounter >= len(services):
+            if self.serviceCounter == self.additionalServices or (self.serviceCounter + 1) >= len(services):
                 self.serviceCounter = 0
 
         return self.__service_row(2 + self.serviceCounter, services[1 + self.serviceCounter])
