@@ -19,6 +19,7 @@ def calling_points(data):
     for location in data['locations']:
         calling_point = CallingPoint(
             location['description'],
+            location['crs'],
             location['gbttBookedArrival'] if 'gbttBookedArrival' in location else location['gbttBookedDeparture'],
             location['realtimeArrival'] if 'realtimeArrival' in location else location['realtimeDeparture']
         )

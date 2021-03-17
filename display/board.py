@@ -17,10 +17,10 @@ class Board:
 
     boxwidth = 70
 
-    def render(self, services):
-        self.__check_service_info(services)
+    def render(self, services, station):
+        self.__check_service_info(services, station)
 
-        header = "│    Time  Destination %s Exp │" % (" " * (self.boxwidth - 29))
+        header = "│    Time  Destination %s Expected │" % (" " * (self.boxwidth - 34))
         bottom = "└─ %s ─┘".replace('─', '─' * int((self.boxwidth - 12) / 2)) % datetime.datetime.now().strftime("%H:%M:%S")
         print(self.__top())
         print(header)
@@ -28,8 +28,8 @@ class Board:
 
 
         if len(services) == 0:
-            print(self.__empty_message())
             print(self.__space_row())
+            print(self.__empty_message())
             print(self.__space_row())
             print(self.__space_row())
         else:
@@ -41,7 +41,7 @@ class Board:
         print(bottom)
 
 
-    def __check_service_info(self, services):
+    def __check_service_info(self, services, station):
         if len(services) == 0:
             return
 
@@ -55,12 +55,27 @@ class Board:
 
             # Concat
             call_str = "Calling at: "
-            for point in calling_points:
-                call_str += "%s (%s), " % (point.description, point.real_arrival)
+            stations_togo = []
+
+
+            for index, point in enumerate(calling_points):
+                if point.code == station.code:
+                    stations_togo = calling_points[(index + 1):]
+
+
+            if len(stations_togo) == 1:
+                call_str += "%s (%s) only." % (stations_togo[0].description, stations_togo[0].real_arrival)
+            else :
+                for point in stations_togo:
+                    if point == calling_points[-1]:
+                        call_str += "and %s (%s)" % (point.description, point.real_arrival)
+                    else:
+                        call_str += "%s (%s), " % (point.description, point.real_arrival)
 
 
             # Add padding at either end for scrolling effect
             self.dest_scroll = (" " * self.boxwidth) + call_str + (" " * self.boxwidth)
+
 
     def __empty_message(self):
         return "│%s│" % str.center("*** No departures available ***", self.boxwidth - 2, " ")
@@ -93,6 +108,7 @@ class Board:
 
         return self.__service_row(2 + self.serviceCounter, services[1 + self.serviceCounter])
 
+
     def __destination_scroll(self):
         substr = self.dest_scroll[self.dest_ticker:(self.dest_ticker + self.boxwidth - 4)]
         self.dest_ticker += 1
@@ -105,5 +121,3 @@ class Board:
 
     def __stops_list(self):
         return self.__space_row()
-
-

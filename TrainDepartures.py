@@ -53,9 +53,8 @@ def mainloop():
         clear()
         print_header()
 
-
         services = parser.all_services(data)
-        board.render(services)
+        board.render(services, station)
         print("%s (%s)" % (station.name, station.code))
         time.sleep(0.1)
 
