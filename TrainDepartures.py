@@ -14,7 +14,7 @@ changeDelta = datetime.timedelta(minutes=1)
 updateThreshold = 60
 
 station = None
-board = None
+board = Board()
 services = None
 
 columns = 80
@@ -30,9 +30,6 @@ def update_data():
       lastUpdate = datetime.datetime.now()
       station = parser.station_information(data)
       services = parser.all_services(data)
-
-      if board is None:
-          board = Board(station)
 
 
 def clear():
@@ -59,9 +56,8 @@ def mainloop():
         print_header()
 
         if station is not None and services is not None:
-            board.render(services)
+            board.render(services, station, config.platform())
 
-        print("%s (%s)" % (station.name, station.code))
         time.sleep(0.1)
 
 

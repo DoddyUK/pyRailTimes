@@ -1,5 +1,5 @@
 # Configuration file for TrainDepartures
 # Use to add your own home station and platforms
 
-station: SOU
-platform: 1
+station: STP
+platform: A

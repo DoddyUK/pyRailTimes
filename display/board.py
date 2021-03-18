@@ -18,15 +18,14 @@ class Board:
 
     boxwidth = 70
 
-    def __init__(self, station):
-        self.station = station
-
-    def render(self, services):
-        self.__check_service_info(services)
+    def render(self, services, station, platform):
+        self.__check_service_info(services, station)
 
         header = "│    Time  Destination %s Expected │" % (" " * (self.boxwidth - 34))
         bottom = "└─ %s ─┘".replace('─', '─' * int((self.boxwidth - 12) / 2)) % datetime.datetime.now().strftime("%H:%M:%S")
         print(self.__top())
+        print(self.__station_row(station, platform))
+        print(self.__divider())
         print(header)
         print(self.__space_row())
 
@@ -45,7 +44,7 @@ class Board:
         print(bottom)
 
 
-    def __check_service_info(self, services):
+    def __check_service_info(self, services, station):
         if len(services) == 0:
             return
 
@@ -63,7 +62,7 @@ class Board:
 
 
             for index, point in enumerate(calling_points):
-                if point.code == self.station.code:
+                if point.code == station.code:
                     stations_togo = calling_points[(index + 1):]
 
 
@@ -88,6 +87,13 @@ class Board:
     def __top(self):
         return "┌─┐".replace('─', '─' * (self.boxwidth - 2))
 
+    def __divider(self):
+        return "├─┤".replace('─', '─' * (self.boxwidth - 2))
+
+    def __station_row(self, station, platform):
+        platform_str = "Platform %s" % platform
+        space_len = self.boxwidth - len(station.name) - len(platform_str) - 7
+        return "│ %s%s │ %s │" % (station.name, " " * space_len, platform_str)
 
     def __space_row(self):
         return "│%s│" % (" " * (self.boxwidth - 2))
