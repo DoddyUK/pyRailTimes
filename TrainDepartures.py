@@ -43,13 +43,15 @@ class PyRailTimes:
             station_code = self.__config.station
 
             if self.__station_data.station is not None:
-                first_service = self.__station_data.services[0]
 
-                if station_code not in self.__services:
-                    self.__update_service_data(first_service, station_code)
+                if len(self.__station_data.services) > 0:
+                    first_service = self.__station_data.services[0]
 
-                elif self.__services[station_code].service_uid != first_service.serviceUid:
-                    self.__update_service_data(first_service, station_code)
+                    if station_code not in self.__services:
+                        self.__update_service_data(first_service, station_code)
+
+                    elif self.__services[station_code].service_uid != first_service.serviceUid:
+                        self.__update_service_data(first_service, station_code)
 
                 self.__board.render(self.__station_data.services, self.__station_data.station, self.__config.platform)
 
