@@ -1,6 +1,4 @@
 import datetime
-import network.rttapi as api
-import parser.parser
 from config.config import Config
 
 class _Renderer:
@@ -125,11 +123,6 @@ class Board:
     #TODO should be passed in rather than making API calls directly
     __service_info = None
 
-    # Counter & limit for additional services
-    serviceCounter = 0
-
-    config = Config()
-
     # TODO Handle cancelled services:
     # "cancelReasonCode": "TG",
     #  "cancelReasonShortText": "issue with train crew",
@@ -138,8 +131,6 @@ class Board:
 
     def render(self, services, station, platform):
         self.__additional_services.set_services(services)
-
-        self.__check_service_info(services, station)
         self.__renderer.header(station, platform)
 
         if len(services) == 0:
@@ -158,25 +149,8 @@ class Board:
     def update_service_info(self, service_info):
         self.__service_info = service_info
 
-    #TODO move API calls out of here
-    def __check_service_info(self, services, station):
-        if len(services) == 0:
-            return
-
-        service = services[0]
-
-        if self.__service_info is None or service.serviceUid != self.__service_info['serviceUid']:
-            self.__service_info = api.fetch_service_info(service.serviceUid, service.runDate)
-
-            calling_points = parser.parser.calling_points(self.__service_info)
-
-            stations_togo = []
-            for index, point in enumerate(calling_points):
-                if point.code == station.code:
-                    stations_togo = calling_points[(index + 1):]
-
-            self.__dest_ticker.set_message(self.__format_calling_points(stations_togo))
-
+    def update_service_calling_points(self, calling_points):
+        self.__dest_ticker.set_message(self.__format_calling_points(calling_points))
 
     def __format_calling_points(self, calling_points):
         # Concat

@@ -5,12 +5,17 @@ from config.credentials import Credentials
 urlBase = "https://api.rtt.io/api/v1"
 
 def fetch_station_info(station):
-    url = "%s/json/search/%s" % (urlBase, station)
+    url = "{base}/json/search/{station}".format(base=urlBase, station=station)
     return __request(url)
 
 def fetch_service_info(service_uid, service_date):
-    url = "%s/json/service/%s/%s/%s/%s" % (urlBase, service_uid, service_date.strftime('%Y'), service_date.strftime('%m'), service_date.strftime('%d'))
-    print(url)
+    url = "{base}/json/service/{service_uid}/{year}/{month}/{day}".format(
+        base=urlBase,
+        service_uid=service_uid,
+        year=service_date.strftime('%Y'),
+        month=service_date.strftime('%m'),
+        day=service_date.strftime('%d')
+    )
     return __request(url)
 
 
