@@ -22,7 +22,6 @@ class Board:
     def render(self, services, station, platform):
         self.__check_service_info(services, station)
 
-        bottom = "└─ %s ─┘".replace('─', '─' * int((self.config.board_width - 12) / 2)) % datetime.datetime.now().strftime("%H:%M:%S")
         print(self.__top())
         print(self.__station_row(station, platform))
         print(self.__divider())
@@ -40,7 +39,7 @@ class Board:
             print(self.__space_row())
             print(self.__additional_service(services))
 
-        print(bottom)
+        print(self.__bottom_row())
 
 
     def __check_service_info(self, services, station):
@@ -96,10 +95,9 @@ class Board:
         return "│ {:<3}{:4>}  {:{width}} {:>8} │".format(order, time, destination, expected, width=(self.config.board_width - 22))
 
     def __station_row(self, station, platform):
-        platform_str = "Platform {}".format(platform)
         return "│ {name:{width}} │ {platform:>12} │".format(
             name=station.name,
-            platform=platform_str,
+            platform="Platform {}".format(platform),
             width=(self.config.board_width - 19)
         )
 
@@ -110,6 +108,15 @@ class Board:
     def __service_row(self, index, service):
         expected = "On Time" if (service.expectedTime == service.departureTime) else service.expectedTime
         return self.__board_row(index, service.departureTime, service.destination, expected)
+
+    def __bottom_row(self):
+        return "└─{:─<{leftwidth}}{:^12}{:─<{rightwidth}}─┘".format(
+            "─",
+            datetime.datetime.now().strftime("%H:%M:%S"),
+            "─",
+            leftwidth=int((self.config.board_width - 16) / 2) + (self.config.board_width % 2),
+            rightwidth=int((self.config.board_width - 16) / 2)
+        )
 
 
     def __additional_service(self, services):
