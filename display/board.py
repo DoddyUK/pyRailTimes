@@ -27,6 +27,7 @@ class Board:
 
     dest_ticker = Ticker()
 
+    #TODO should be passed in rather than making API calls directly
     serviceInfo = None
 
     # Counter & limit for additional services

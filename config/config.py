@@ -5,7 +5,10 @@ class Config:
         config_yaml = self.__credentials()
         self.station = config_yaml.get('station')
         self.platform = config_yaml.get('platform')
-        self.board_width = max(config_yaml.get('boardwidth'), 48)
+
+        # Display board rendering config
+        self.board_width = max(config_yaml.get('board_width'), 48)
+        self.addional_services = config_yaml.get('additional_services')
 
     @staticmethod
     def __credentials():
