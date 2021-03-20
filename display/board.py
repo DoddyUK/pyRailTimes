@@ -3,13 +3,29 @@ import network.rttapi as api
 import parser.parser
 from config.config import Config
 
+class Ticker:
+    __message = ""
+    counter = 0
+    config = Config()
+
+    def set_message(self, message):
+        self.__message = "{:>{width}}".format(message, width=(self.config.board_width + len(message)))
+        self.counter = 0
+
+    def render(self):
+        out = self.__message[self.counter:(self.counter + self.config.board_width - 4)]
+        self.counter += 1
+        if self.counter >= len(self.__message):
+            self.counter = 0
+        return out
+
+
 class Board:
 
     lastChange = datetime.datetime.now()
     changeDelta = datetime.timedelta(seconds=5)
 
-    dest_scroll = ""
-    dest_ticker = 0
+    dest_ticker = Ticker()
 
     serviceInfo = None
 
@@ -35,7 +51,7 @@ class Board:
             print(self.__space_row())
         else:
             print(self.__service_row(1, services[0]))
-            print(self.__destination_scroll())
+            print(self.__calling_row())
             print(self.__space_row())
             print(self.__additional_service(services))
 
@@ -50,32 +66,31 @@ class Board:
 
         if self.serviceInfo is None or service.serviceUid != self.serviceInfo['serviceUid']:
             self.serviceInfo = api.fetch_service_info(service.serviceUid, service.runDate)
-            self.dest_ticker = 0
 
             calling_points = parser.parser.calling_points(self.serviceInfo)
 
-            # Concat
-            call_str = "Calling at: "
             stations_togo = []
-
-
             for index, point in enumerate(calling_points):
                 if point.code == station.code:
                     stations_togo = calling_points[(index + 1):]
 
-
-            if len(stations_togo) == 1:
-                call_str += "{} ({}) only.".format(stations_togo[0].description, stations_togo[0].real_arrival)
-            else :
-                for point in stations_togo:
-                    if point == calling_points[-1]:
-                        call_str += "and {} ({})".format(point.description, point.real_arrival)
-                    else:
-                        call_str += "{} ({}), ".format(point.description, point.real_arrival)
+            self.dest_ticker.set_message(self.__format_calling_points(stations_togo))
 
 
-            # Add padding at either end for scrolling effect
-            self.dest_scroll = (" " * self.config.board_width) + call_str + (" " * self.config.board_width)
+    def __format_calling_points(self, calling_points):
+        # Concat
+        call_str = "Calling at: "
+
+        if len(calling_points) == 1:
+            call_str += "{} ({}) only.".format(calling_points[0].description, calling_points[0].real_arrival)
+        else :
+            for point in calling_points:
+                if point == calling_points[-1]:
+                    call_str += "and {} ({})".format(point.description, point.real_arrival)
+                else:
+                    call_str += "{} ({}), ".format(point.description, point.real_arrival)
+
+        return call_str
 
 
     def __message(self, message):
@@ -118,6 +133,9 @@ class Board:
             rightwidth=int((self.config.board_width - 16) / 2)
         )
 
+    def __calling_row(self):
+        return "│ {:{width}} │".format(self.dest_ticker.render(), width=(self.config.board_width - 4))
+
 
     def __additional_service(self, services):
         if len(services) <= 1:
@@ -130,17 +148,6 @@ class Board:
                 self.serviceCounter = 0
 
         return self.__service_row(2 + self.serviceCounter, services[1 + self.serviceCounter])
-
-
-    def __destination_scroll(self):
-        substr = self.dest_scroll[self.dest_ticker:(self.dest_ticker + self.config.board_width - 4)]
-        self.dest_ticker += 1
-
-        if (self.dest_ticker + self.config.board_width) >= len(self.dest_scroll):
-            self.dest_ticker = 0
-
-        return "│ {:{width}} │".format(substr, width=self.config.board_width - 4)
-
 
     def __stops_list(self):
         return self.__space_row()

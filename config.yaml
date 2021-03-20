@@ -1,8 +1,8 @@
 # Configuration file for TrainDepartures
 # Use to add your own home station and platforms
 
-station: STP
-platform: A
+station: SOU
+platform: 1
 
 # Width of departure boards. Minimum is 48
-boardwidth: 65
+boardwidth: 48
