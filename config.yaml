@@ -3,3 +3,6 @@
 
 station: STP
 platform: A
+
+# Width of departure boards. Minimum is 48
+boardwidth: 66

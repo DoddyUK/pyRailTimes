@@ -1,6 +1,7 @@
 import datetime
-import network.api as api
+import network.rttapi as api
 import parser.parser
+from config.config import Config
 
 class Board:
 
@@ -16,13 +17,13 @@ class Board:
     additionalServices = 3
     serviceCounter = 0
 
-    boxwidth = 70
+    config = Config()
 
     def render(self, services, station, platform):
         self.__check_service_info(services, station)
 
-        header = "│    Time  Destination %s Expected │" % (" " * (self.boxwidth - 34))
-        bottom = "└─ %s ─┘".replace('─', '─' * int((self.boxwidth - 12) / 2)) % datetime.datetime.now().strftime("%H:%M:%S")
+        header = "│    Time  Destination %s Expected │" % (" " * (self.config.board_width - 34))
+        bottom = "└─ %s ─┘".replace('─', '─' * int((self.config.board_width - 12) / 2)) % datetime.datetime.now().strftime("%H:%M:%S")
         print(self.__top())
         print(self.__station_row(station, platform))
         print(self.__divider())
@@ -77,38 +78,38 @@ class Board:
 
 
             # Add padding at either end for scrolling effect
-            self.dest_scroll = (" " * self.boxwidth) + call_str + (" " * self.boxwidth)
+            self.dest_scroll = (" " * self.config.board_width) + call_str + (" " * self.config.board_width)
 
 
     def __empty_message(self):
-        return "│%s│" % str.center("*** No departures available ***", self.boxwidth - 2, " ")
+        return "│%s│" % str.center("*** No departures available ***", self.config.board_width - 2, " ")
 
 
     def __top(self):
-        return "┌─┐".replace('─', '─' * (self.boxwidth - 2))
+        return "┌─┐".replace('─', '─' * (self.config.board_width - 2))
 
     def __divider(self):
-        return "├─┤".replace('─', '─' * (self.boxwidth - 2))
+        return "├─┤".replace('─', '─' * (self.config.board_width - 2))
 
     def __station_row(self, station, platform):
         platform_str = "Platform %s" % platform
-        space_len = self.boxwidth - len(station.name) - len(platform_str) - 7
+        space_len = self.config.board_width - len(station.name) - len(platform_str) - 7
         return "│ %s%s │ %s │" % (station.name, " " * space_len, platform_str)
 
     def __space_row(self):
-        return "│%s│" % (" " * (self.boxwidth - 2))
+        return "│%s│" % (" " * (self.config.board_width - 2))
 
 
     def __service_row(self, index, service):
         left = "%s  %s  %s" % (index, service.departureTime, service.destination)
         expected = "On Time" if (service.expectedTime == service.departureTime) else service.expectedTime
-        row = "│ %s%s%s │" % (left, " " * (self.boxwidth - (len(left) + len(expected) + 4)),expected)
+        row = "│ %s%s%s │" % (left, " " * (self.config.board_width - (len(left) + len(expected) + 4)),expected)
         return row
 
 
     def __additional_service(self, services):
         if len(services) <= 1:
-            return "│%s│" % str.center("*** No additional departures ***", self.boxwidth - 2, " ")
+            return "│%s│" % str.center("*** No additional departures ***", self.config.board_width - 2, " ")
 
         if (self.lastChange + self.changeDelta) < datetime.datetime.now():
             self.lastChange = datetime.datetime.now()
@@ -120,10 +121,10 @@ class Board:
 
 
     def __destination_scroll(self):
-        substr = self.dest_scroll[self.dest_ticker:(self.dest_ticker + self.boxwidth - 4)]
+        substr = self.dest_scroll[self.dest_ticker:(self.dest_ticker + self.config.board_width - 4)]
         self.dest_ticker += 1
 
-        if (self.dest_ticker + self.boxwidth) >= len(self.dest_scroll):
+        if (self.dest_ticker + self.config.board_width) >= len(self.dest_scroll):
             self.dest_ticker = 0
 
         return "│ %s │" % substr

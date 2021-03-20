@@ -1,6 +1,6 @@
 import requests
 from requests.auth import HTTPBasicAuth
-import config.credentials as credentials
+from config.credentials import Credentials
 
 urlBase = "https://api.rtt.io/api/v1"
 
@@ -15,7 +15,8 @@ def fetch_service_info(service_uid, service_date):
 
 
 def __request(url):
-    auth = HTTPBasicAuth(credentials.username(), credentials.password())
+    credentials = Credentials()
+    auth = HTTPBasicAuth(credentials.username, credentials.password)
 
     response = requests.get(url, auth=auth)
 

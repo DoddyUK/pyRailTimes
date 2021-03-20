@@ -2,12 +2,13 @@
 
 import yaml
 
-def username():
-        return __credentials().get('user')
+class Credentials:
+    def __init__(self):
+        cred_yaml = self.__credentials()
+        self.username = cred_yaml.get('user')
+        self.password = cred_yaml.get('pass')
 
-def password():
-        return __credentials().get('pass')
-
-def __credentials():
-    with open(r"credentials.yaml") as file:
-        return yaml.load(file, yaml.FullLoader)
+    @staticmethod
+    def __credentials():
+        with open(r"credentials.yaml") as file:
+            return yaml.load(file, yaml.FullLoader)
