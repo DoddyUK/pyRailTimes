@@ -1,9 +1,9 @@
 import datetime
 
-import network.rttapi as api
 import parser.parser as parser
 from display.board import Board
 from config.config import Config
+from network.rttapi import RttApi
 import time
 import os
 
@@ -22,6 +22,7 @@ services = None
 columns = 80
 
 config = Config()
+rtt_api = RttApi()
 
 def update_data():
     global config, data, lastUpdate, updateThreshold, station, board, services
@@ -30,7 +31,7 @@ def update_data():
             or lastUpdate is None \
             or ((lastUpdate + changeDelta) < datetime.datetime.now()):
 
-        data = api.fetch_station_info(config.station)
+        data = rtt_api.fetch_station_info(config.station)
         lastUpdate = datetime.datetime.now()
         station = parser.station_information(data)
         services = parser.all_services(data)
@@ -43,7 +44,7 @@ def __fetch_service_info(service):
     global service_info, board, station
 
     if service_info is None or service.serviceUid != service_info['serviceUid']:
-        service_info = api.fetch_service_info(service.serviceUid, service.runDate)
+        service_info = rtt_api.fetch_service_info(service.serviceUid, service.runDate)
 
         calling_points = parser.calling_points(service_info)
 

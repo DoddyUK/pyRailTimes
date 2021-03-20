@@ -1,6 +1,22 @@
 import datetime
 from config.config import Config
 
+def _format_calling_points(calling_points):
+    # Concat
+    call_str = "Calling at: "
+
+    if len(calling_points) == 1:
+        call_str += "{} ({}) only.".format(calling_points[0].description, calling_points[0].real_arrival)
+    else :
+        for point in calling_points:
+            if point == calling_points[-1]:
+                call_str += "and {} ({})".format(point.description, point.real_arrival)
+            else:
+                call_str += "{} ({}), ".format(point.description, point.real_arrival)
+
+    return call_str
+
+
 class _Renderer:
     def __init__(self, config):
         self.__config = config
@@ -119,8 +135,6 @@ class Board:
     __renderer = _Renderer(__config)
     __dest_ticker = _Ticker(__config, __renderer)
     __additional_services = _AdditionalServiceFlipper(__config, __renderer)
-
-    #TODO should be passed in rather than making API calls directly
     __service_info = None
 
     # TODO Handle cancelled services:
@@ -150,19 +164,4 @@ class Board:
         self.__service_info = service_info
 
     def update_service_calling_points(self, calling_points):
-        self.__dest_ticker.set_message(self.__format_calling_points(calling_points))
-
-    def __format_calling_points(self, calling_points):
-        # Concat
-        call_str = "Calling at: "
-
-        if len(calling_points) == 1:
-            call_str += "{} ({}) only.".format(calling_points[0].description, calling_points[0].real_arrival)
-        else :
-            for point in calling_points:
-                if point == calling_points[-1]:
-                    call_str += "and {} ({})".format(point.description, point.real_arrival)
-                else:
-                    call_str += "{} ({}), ".format(point.description, point.real_arrival)
-
-        return call_str
+        self.__dest_ticker.set_message(_format_calling_points(calling_points))
