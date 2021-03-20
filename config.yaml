@@ -5,5 +5,5 @@ station: SOU
 platform: 1
 
 # Width of departure boards. Minimum is 48
-board_width: 48
+board_width: 60
 additional_services: 5

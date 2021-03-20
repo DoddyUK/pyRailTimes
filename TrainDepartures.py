@@ -1,88 +1,64 @@
 import datetime
 
-import parser.parser as parser
 from display.board import Board
 from config.config import Config
-from network.rttapi import RttApi
+from data.data import StationData, ServiceData
 import time
 import os
 
-# Main body
-data = None
-lastUpdate = None
-changeDelta = datetime.timedelta(minutes=1)
-updateThreshold = 60
-
-station = None
-service_info = None
-board = Board()
-services = None
-
-# Default width of the terminal
-columns = 80
-
-config = Config()
-rtt_api = RttApi()
-
-def update_data():
-    global config, data, lastUpdate, updateThreshold, station, board, services
-
-    if data is None \
-            or lastUpdate is None \
-            or ((lastUpdate + changeDelta) < datetime.datetime.now()):
-
-        data = rtt_api.fetch_station_info(config.station)
-        lastUpdate = datetime.datetime.now()
-        station = parser.station_information(data)
-        services = parser.all_services(data)
-
-        if len(services) > 0:
-            __fetch_service_info(services[0])
-
-
-def __fetch_service_info(service):
-    global service_info, board, station
-
-    if service_info is None or service.serviceUid != service_info['serviceUid']:
-        service_info = rtt_api.fetch_service_info(service.serviceUid, service.runDate)
-
-        calling_points = parser.calling_points(service_info)
-
-        stations_togo = []
-        for index, point in enumerate(calling_points):
-            if point.code == station.code:
-                stations_togo = calling_points[(index + 1):]
-
-        board.update_service_calling_points(stations_togo)
-
-def clear():
+def _clear():
     os.system("cls" if os.name == "nt" else "clear")
 
-def print_header():
-    global lastUpdate, columns
-    print("{:>{width}}".format("pyRailTimes", width=columns))
-    update = "Last update: {}".format(datetime.datetime.strftime(lastUpdate, "%H:%M:%S"))
-    print("{:>{width}}".format(update, width=columns))
 
-def update_columns():
-    global columns
-    try:
-        columns, _ = os.get_terminal_size(0)
-    except OSError:
-        return
+class PyRailTimes:
+    __board = Board()
+    __services = dict()
 
-def mainloop():
-    global config, station, lastUpdate, data
-    while True:
-        update_columns()
-        update_data()
-        clear()
-        print_header()
+    # Default width of the terminal
+    __columns = 80
 
-        if station is not None and services is not None:
-            board.render(services, station, config.platform)
+    __config = Config()
 
-        time.sleep(0.1)
+    def __init__(self):
+        self.__station_data = StationData(self.__config.station)
+
+    def __print_header(self):
+        print("{:>{width}}".format("pyRailTimes", width=self.__columns))
+        update = "Last update: {}".format(datetime.datetime.strftime(self.__station_data.last_update, "%H:%M:%S"))
+        print("{:>{width}}".format(update, width=self.__columns))
+
+    def __update_columns(self):
+        try:
+            self.__columns, _ = os.get_terminal_size(0)
+        except OSError:
+            return
+
+    def mainloop(self):
+        while True:
+            self.__update_columns()
+            self.__station_data.check_updates()
+            _clear()
+            self.__print_header()
+
+            station_code = self.__config.station
+
+            if self.__station_data.station is not None:
+                first_service = self.__station_data.services[0]
+
+                if station_code not in self.__services:
+                    self.__update_service_data(first_service, station_code)
+
+                elif self.__services[station_code].service_uid != first_service.serviceUid:
+                    self.__update_service_data(first_service, station_code)
+
+                self.__board.render(self.__station_data.services, self.__station_data.station, self.__config.platform)
+
+            time.sleep(0.1)
+
+    def __update_service_data(self, service, station_code):
+        service_data = ServiceData(service.serviceUid, service.runDate)
+        self.__services[station_code] = service_data
+        self.__board.update_service_calling_points(service_data.calling_points)
 
 # Entry point
-mainloop()
+PyRailTimes().mainloop()
