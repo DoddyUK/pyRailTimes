@@ -38,7 +38,7 @@ def __services(data):
                 datetime.datetime.strptime(service['runDate'], "%Y-%m-%d").date(),
                 location['gbttBookedDeparture'],
                 location['destination'][0]['description'],
-                location['realtimeDeparture']
+                location['realtimeDeparture'] if 'realtimeDeparture' in location else "----"  # Replacement buses do not have real time info
             )
             out.append(train)
 
