@@ -31,13 +31,11 @@ class _Renderer:
             self.__top(),
             self.__station_row(station_name, platform),
             self.__divider(),
-            self.board_row(3, "", "Time", "Destination", "Expected")
+            self.board_row("", "Time", "Destination", "Expected")
         ]
-        for x in range(5):
+        for x in range(4):
             # Blank information board for now
             out.append(self.blank_row())
-
-        out.append(self.bottom_row())
 
         # draw
         for row, text in enumerate(out):
@@ -47,7 +45,18 @@ class _Renderer:
 
     def update_station_name(self, station_name, platform):
         self.__window.addstr(1, 0, self.__station_row(station_name, platform))
-        self.commit()
+
+    def show_no_departures(self):
+        self.__window.addstr(4, 0, self.blank_row())
+        self.__window.addstr(5, 0, self.message("*** No departures available ***"))
+        self.__window.addstr(6, 0, self.blank_row())
+        self.__window.addstr(7, 0, self.blank_row())
+
+    def update_primary_departure(self, service):
+        self.__window.addstr(4, 0, self.board_row(1, service.departureTime, service.destination, service.expectedTime))
+
+    def update_ticker_row(self, message):
+        self.__window.addstr(5, 0, self.left_message(message))
 
     def message(self, message):
         return "│ {:^{width}} │".format(message, width=self.__config.board_width - 4)
@@ -55,7 +64,7 @@ class _Renderer:
     def left_message(self, message):
         return "│ {:{width}} │".format(message, width=self.__config.board_width - 4)
 
-    def board_row(self, top, order, time, destination, expected, ):
+    def board_row(self, order, time, destination, expected):
         return "│ {:<3}{:4>}  {:{width}} {:>8} │".format(
             order,
             time,
@@ -81,19 +90,29 @@ class _Renderer:
 
     def service_row(self, index, service):
         expected = "On Time" if (service.expectedTime == service.departureTime) else service.expectedTime
-        self.board_row(7, index, service.departureTime, service.destination, expected)
+        return self.board_row(index, service.departureTime, service.destination, expected)
 
     def blank_row(self):
         return self.message(" ")
 
-    def bottom_row(self):
-        return "└─{:─<{leftwidth}}{:^12}{:─<{rightwidth}}─┘".format(
+    def update_time(self):
+        time_row = "└─{:─<{leftwidth}}{:^12}{:─<{rightwidth}}─┘".format(
             "─",
             datetime.datetime.now().strftime("%H:%M:%S"),
             "─",
             leftwidth=int((self.__config.board_width - 16) / 2) + (self.__config.board_width % 2),
             rightwidth=int((self.__config.board_width - 16) / 2)
         )
+        self.__window.addstr(8, 0, time_row)
+
+    def update_additional_service_row(self, index, service):
+        if not service:
+            message = self.message("*** No additional departures ***")
+        else:
+            message = self.service_row(index, service)
+
+        self.__window.addstr(7, 0, message)
+
 
     def commit(self):
         self.__window.refresh()
@@ -111,21 +130,18 @@ class _Ticker:
         self.__message = "{:>{width}}".format(message, width=(self.__config.board_width + len(message)))
         self.__counter = 0
 
-    def render(self):
+    def get_and_advance(self):
         out = self.__message[self.__counter:(self.__counter + self.__config.board_width - 4)]
         self.__counter += 1
         if self.__counter >= len(self.__message):
             self.__counter = 0
 
-        self.__renderer.left_message(out)
+        return out
 
 
 class _AdditionalServiceFlipper:
     __services = []
     __counter = 0
-
-    __last_change = datetime.datetime.now()
-    __change_delta = datetime.timedelta(seconds=5)
 
     def __init__(self, config, renderer):
         self.__config = config
@@ -137,23 +153,25 @@ class _AdditionalServiceFlipper:
         else:
             self.__services = services[1:self.__config.additional_services]
 
-    def render(self):
-        if len(self.__services) < 1:
-            self.__renderer.message("*** No additional departures ***")
-            return
+    def get_and_advance(self):
+        if not self.__services:
+            return -1, None
+        else:
+            service = self.__services[self.__counter]
+            index = 2 + self.__counter
+            self.__advance_counter()
 
-        if (self.__last_change + self.__change_delta) < datetime.datetime.now():
-            self.__last_change = datetime.datetime.now()
-            self.__counter = self.__counter + 1
-            if self.__counter == self.__config.additional_services or (self.__counter + 1) >= len(self.__services):
-                self.__counter = 0
+            return index, service
 
-        self.__renderer.service_row(2 + self.__counter, self.__services[1 + self.__counter])
+    def __advance_counter(self):
+        self.__counter += 1
+        if self.__counter == self.__config.additional_services or (self.__counter + 1) >= len(self.__services):
+            self.__counter = 0
 
 
 class Board:
     __config = Config()
-    __service_info = None
+    __services = None
 
     __station = ""
     __platform = ""
@@ -178,28 +196,23 @@ class Board:
         self.__station = station
         self.__platform = platform
         self.__renderer.update_station_name(station.name, platform)
-
-
-    def render(self, services):
-        self.__additional_services.set_services(services)
-
-        if len(services) == 0:
-            self.__renderer.blank_row()
-            self.__renderer.message("*** No departures available ***")
-            self.__renderer.blank_row()
-            self.__renderer.blank_row()
-        else:
-            self.__renderer.service_row(1, services[0])
-            self.__dest_ticker.render()
-            self.__renderer.blank_row()
-            self.__additional_services.render()
-
-        self.__renderer.bottom_row()
-
         self.__renderer.commit()
 
-    def update_service_info(self, service_info):
-        self.__service_info = service_info
+    def update_services(self, services):
+        # Only update the board if we have new info
+        if services != self.__services:
+            self.__services = services
+
+            if not services:
+                self.__renderer.show_no_departures()
+                self.__renderer.commit()
+            else:
+                self.__renderer.update_primary_departure(self.__services[0])
+
+                self.__additional_services.set_services(services)
+                index, service = self.__additional_services.get_and_advance()
+                self.__renderer.update_additional_service_row(index, service)
+                self.__renderer.commit()
 
     def update_service_calling_points(self, calling_points):
         stations_togo = []
@@ -210,3 +223,28 @@ class Board:
                 break
 
         self.__dest_ticker.set_message(_format_calling_points(stations_togo))
+
+    def update_time(self):
+        self.__renderer.update_time()
+        self.__renderer.commit()
+
+    def show_no_services(self):
+        self.update_services([])
+
+    def advance_ticker(self):
+        if self.__services:
+            self.__renderer.update_ticker_row(self.__dest_ticker.get_and_advance())
+            self.__renderer.commit()
+
+    def advance_destinations(self):
+        index, service = self.__additional_services.get_and_advance()
+        self.__renderer.update_additional_service_row(index, service)
+        self.__renderer.commit()
+
+    def redraw(self):
+        self.draw_box()
+
+        if self.__station != "" and self.__platform != "":
+            self.__renderer.update_station_name(self.__station.name, self.__platform)
+
+
