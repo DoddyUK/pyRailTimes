@@ -2,6 +2,8 @@ import datetime
 import data.parser as parser
 from network.api import RttApi
 
+# TODO these data objects should have callback methods to signal when an update has occurred
+
 class StationData:
     data = None
     last_update = None

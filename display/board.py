@@ -1,4 +1,5 @@
 import datetime
+import curses
 from config.config import Config
 
 def _format_calling_points(calling_points):
@@ -18,18 +19,41 @@ def _format_calling_points(calling_points):
 
 
 class _Renderer:
-    def __init__(self, config):
+    __buffer = []
+
+    def __init__(self, config, top, left):
         self.__config = config
+        self.__stdscr = curses.initscr()
+        self.__window = curses.newwin(50, config.board_width, top, left)
+
+    def draw_box(self, station, platform):
+        # build buffer
+        # header
+        self.__top()
+        self.__station_row(station, platform)
+        self.__divider()
+        self.board_row(3, "", "Time", "Destination", "Expected")
+        for x in range(5):
+            # Blank information board for now
+            self.blank_row()
+
+        self.bottom_row()
+
+        # draw
+        for row, text in enumerate(self.__buffer):
+            self.__window.addstr(row, 0, text)
+
+        self.clear_buffer()
+
 
     def message(self, message):
-        print("│ {:^{width}} │".format(message, width=self.__config.board_width - 4))
+        self.__buffer.append("│ {:^{width}} │".format(message, width=self.__config.board_width - 4))
 
     def left_message(self, message):
-        print("│ {:{width}} │".format(message, width=self.__config.board_width - 4))
+        self.__buffer.append("│ {:{width}} │".format(message, width=self.__config.board_width - 4))
 
-    def board_row(self, order, time, destination, expected, ):
-        print(
-            "│ {:<3}{:4>}  {:{width}} {:>8} │".format(
+    def board_row(self, top, order, time, destination, expected, ):
+        self.__buffer.append("│ {:<3}{:4>}  {:{width}} {:>8} │".format(
                 order,
                 time,
                 destination,
@@ -39,14 +63,13 @@ class _Renderer:
         )
 
     def __top(self):
-        print("┌{:─<{width}}┐".format('─', width=self.__config.board_width - 2))
+        self.__buffer.append("┌{:─<{width}}┐".format('─', width=self.__config.board_width - 2))
 
     def __divider(self):
-        print("├{:─<{width}}┤".format('─', width=self.__config.board_width - 2))
+        self.__buffer.append("├{:─<{width}}┤".format('─', width=self.__config.board_width - 2))
 
     def __station_row(self, station, platform):
-        print(
-            "│ {name:{width}} │ {platform:>12} │".format(
+        self.__buffer.append("│ {name:{width}} │ {platform:>12} │".format(
                 name=station.name,
                 platform="Platform {}".format(platform),
                 width=(self.__config.board_width - 19)
@@ -57,17 +80,17 @@ class _Renderer:
         self.__top()
         self.__station_row(station, platform)
         self.__divider()
-        self.board_row("", "Time", "Destination", "Expected")
+        self.board_row(3, "", "Time", "Destination", "Expected")
 
     def service_row(self, index, service):
         expected = "On Time" if (service.expectedTime == service.departureTime) else service.expectedTime
-        self.board_row(index, service.departureTime, service.destination, expected)
+        self.board_row(7, index, service.departureTime, service.destination, expected)
 
     def blank_row(self):
         self.message(" ")
 
     def bottom_row(self):
-        print(
+        self.__buffer.append(
             "└─{:─<{leftwidth}}{:^12}{:─<{rightwidth}}─┘".format(
                 "─",
                 datetime.datetime.now().strftime("%H:%M:%S"),
@@ -76,6 +99,13 @@ class _Renderer:
                 rightwidth=int((self.__config.board_width - 16) / 2)
             )
         )
+
+
+    def commit(self):
+        self.__window.refresh()
+
+    def clear_buffer(self):
+        self.__buffer = []
 
 
 class _Ticker:
@@ -132,10 +162,10 @@ class _AdditionalServiceFlipper:
 
 class Board:
     __config = Config()
-    __renderer = _Renderer(__config)
-    __dest_ticker = _Ticker(__config, __renderer)
-    __additional_services = _AdditionalServiceFlipper(__config, __renderer)
     __service_info = None
+
+    __station = ""
+    __platform = ""
 
     # TODO Handle cancelled services:
     # "cancelReasonCode": "TG",
@@ -143,22 +173,36 @@ class Board:
     #  "cancelReasonLongText": "an issue with the train crew",
     #  "displayAs": "CANCELLED_CALL"
 
-    def render(self, services, station, platform):
+    def __init__(self, top, left, ):
+        self.__top = top
+        self.__left = left
+        self.__renderer = _Renderer(self.__config, top, left)
+        self.__dest_ticker = _Ticker(self.__config, self.__renderer)
+        self.__additional_services = _AdditionalServiceFlipper(self.__config, self.__renderer)
+
+
+    def set_station(self, station, platform):
+        self.__station = station
+        self.__platform = platform
+        self.__renderer.draw_box(station, platform)
+
+    def render(self, services):
         self.__additional_services.set_services(services)
-        self.__renderer.header(station, platform)
 
-        if len(services) == 0:
-            self.__renderer.blank_row()
-            self.__renderer.message("*** No departures available ***")
-            self.__renderer.blank_row()
-            self.__renderer.blank_row()
-        else:
-            self.__renderer.service_row(1, services[0])
-            self.__dest_ticker.render()
-            self.__renderer.blank_row()
-            self.__additional_services.render()
+        # if len(services) == 0:
+        #     self.__renderer.blank_row()
+        #     self.__renderer.message("*** No departures available ***")
+        #     self.__renderer.blank_row()
+        #     self.__renderer.blank_row()
+        # else:
+        #     self.__renderer.service_row(1, services[0])
+        #     self.__dest_ticker.render()
+        #     self.__renderer.blank_row()
+        #     self.__additional_services.render()
+        #
+        # self.__renderer.bottom_row()
 
-        self.__renderer.bottom_row()
+        self.__renderer.commit()
 
     def update_service_info(self, service_info):
         self.__service_info = service_info
