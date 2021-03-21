@@ -11,6 +11,7 @@ def all_services(data):
     return __services(data)
 
 def filter_by_platform(data, platform):
+    # TODO
     return ""
 
 def calling_points(data):
@@ -33,6 +34,7 @@ def __services(data):
     if data['services'] is not None:
         for service in data['services']:
             location = service['locationDetail']
+            # TODO handle multiple destinations where the train splits
             train = Service(
                 service['serviceUid'],
                 datetime.datetime.strptime(service['runDate'], "%Y-%m-%d").date(),
