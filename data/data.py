@@ -31,7 +31,6 @@ class ServiceData:
 
     def __init__(self, service_uid, date):
         self.service_uid = service_uid
-        self.__date = date
-        self.__data = self.__api.fetch_service_info(self.service_uid, self.__date)
+        self.__data = self.__api.fetch_service_info(self.service_uid, date)
         self.calling_points = parser.calling_points(self.__data)
 

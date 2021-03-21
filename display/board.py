@@ -118,7 +118,7 @@ class _AdditionalServiceFlipper:
 
     def render(self):
         if len(self.__services) < 1:
-            self.__renderer.message(self.__config, "*** No additional departures ***")
+            self.__renderer.message("*** No additional departures ***")
             return
 
         if (self.__last_change + self.__change_delta) < datetime.datetime.now():
