@@ -41,6 +41,8 @@ class PyRailTimes:
             update = "Last update: {}".format(datetime.datetime.strftime(self.__station_data.last_update, "%H:%M:%S"))
             self.__stdscr.addstr(1, max(0, self.__cols - len(update)), update)
 
+        self.__stdscr.refresh()
+
     def __handle_resize(self):
         self.__update_size()
         self.__stdscr.clear()
@@ -60,7 +62,7 @@ class PyRailTimes:
             if resize is not False:
                 self.__handle_resize()
 
-            self.__station_data.check_updates()
+            self.__station_data.check_updates(lambda: self.__on_station_update())
             # self.__print_header()
 
             station_code = self.__config.station
@@ -73,21 +75,55 @@ class PyRailTimes:
                     first_service = self.__station_data.services[0]
 
                     if station_code not in self.__services:
-                        self.__update_service_data(first_service, station_code)
+                        self.__update_service_data(first_service)
 
                     elif self.__services[station_code].service_uid != first_service.serviceUid:
-                        self.__update_service_data(first_service, station_code)
+                        self.__update_service_data(first_service)
 
                 self.__board.render(self.__station_data.services)
 
             time.sleep(0.1)
 
-    def __update_service_data(self, service, station_code):
-        service_data = ServiceData(service.serviceUid, service.runDate)
-        self.__services[station_code] = service_data
+
+    def curses_loop(self):
+        self.__board.draw_box()
+
+        while True:
+            # Check if screen was re-sized (True or False)
+            resize = curses.is_term_resized(self.__rows, self.__cols)
+            if resize is not False:
+                self.__handle_resize()
+
+            self.__station_data.check_updates(lambda: self.__on_station_update())
+
+            time.sleep(0.1)
+
+
+
+    def __on_station_update(self):
+        self.__print_header()
+        self.__board.set_station(self.__station_data.station, self.__config.platform)
+
+        # if len(self.__station_data.services) > 0:
+        #     first_service = self.__station_data.services[0]
+        #     station_code = self.__config.station
+        #
+        #     if station_code not in self.__services:
+        #         self.__update_service_data(first_service)
+        #
+        #     elif self.__services[station_code].service_uid != first_service.serviceUid:
+        #         self.__update_service_data(first_service)
+
+
+    def __on_service_update(self, service_data):
         self.__board.update_service_calling_points(service_data.calling_points)
+
+    def __update_service_data(self, service):
+        service_data = ServiceData(service.serviceUid, service.runDate, lambda data: self.__on_service_update(data))
+        self.__services[self.__config.station] = service_data
 
 # Entry point
 
 if __name__ == '__main__':
-    wrapper(PyRailTimes().mainloop())
+    #wrapper(PyRailTimes().mainloop())
+    wrapper(PyRailTimes().curses_loop())
