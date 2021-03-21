@@ -111,10 +111,10 @@ class _AdditionalServiceFlipper:
         self.__renderer = renderer
 
     def set_services(self, services):
-        if len(services) < 2 or self.__config.addional_services < 1:
+        if len(services) < 2 or self.__config.additional_services < 1:
             self.__services = []
         else:
-            self.__services = services[1:self.__config.addional_services]
+            self.__services = services[1:self.__config.additional_services]
 
     def render(self):
         if len(self.__services) < 1:
@@ -124,7 +124,7 @@ class _AdditionalServiceFlipper:
         if (self.__last_change + self.__change_delta) < datetime.datetime.now():
             self.__last_change = datetime.datetime.now()
             self.__counter = self.__counter + 1
-            if self.__counter == self.__config.addional_services or (self.__counter + 1) >= len(self.__services):
+            if self.__counter == self.__config.additional_services or (self.__counter + 1) >= len(self.__services):
                 self.__counter = 0
 
         self.__renderer.service_row(2 + self.__counter, self.__services[1 + self.__counter])
