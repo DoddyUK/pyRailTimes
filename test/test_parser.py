@@ -2,6 +2,7 @@ import unittest
 import datetime
 import data.parser as parser
 from model.service import Service
+from model.calling_point import CallingPoint
 
 class TestParser(unittest.TestCase):
 
@@ -80,6 +81,75 @@ class TestParser(unittest.TestCase):
         ]
 
         self.assertListEqual(expected, actual)
+
+
+    def test_calling_points(self):
+        location_info = {
+            'locations': [
+                {
+                    'description': 'Basingstoke',
+                    'crs': 'BSK',
+                    'gbttBookedArrival': '1204',
+                    'realtimeArrival': '1204'
+                },
+                {
+                    'description': 'Woking',
+                    'crs': 'WOK',
+                    'gbttBookedArrival': '1229',
+                    'realtimeArrival': '1231'
+                },
+                {
+                    'description': 'Clapham Junction',
+                    'crs': 'CLJ',
+                    'gbttBookedArrival': '1258',
+                    'realtimeArrival': '1304'
+                }
+            ]
+        }
+
+        expected = [
+            CallingPoint('Basingstoke', 'BSK', '1204', '1204'),
+            CallingPoint('Woking', 'WOK', '1229', '1231'),
+            CallingPoint('Clapham Junction', 'CLJ', '1258', '1304'),
+        ]
+
+        actual = parser.calling_points(location_info)
+        self.assertEqual(3, len(actual))
+        self.assertEqual(expected, actual)
+
+    def test_calling_points_with_arrival_missing(self):
+        location_info = {
+            'locations': [
+                {
+                    'description': 'Basingstoke',
+                    'crs': 'BSK',
+                    'gbttBookedDeparture': '1204',
+                    'realtimeDeparture': '1204'
+                },
+                {
+                    'description': 'Woking',
+                    'crs': 'WOK',
+                    'gbttBookedDeparture': '1229',
+                    'realtimeArrival': '1231'
+                },
+                {
+                    'description': 'Clapham Junction',
+                    'crs': 'CLJ',
+                    'gbttBookedArrival': '1258',
+                    'realtimeDeparture': '1304'
+                }
+            ]
+        }
+
+        expected = [
+            CallingPoint('Basingstoke', 'BSK', '1204', '1204'),
+            CallingPoint('Woking', 'WOK', '1229', '1231'),
+            CallingPoint('Clapham Junction', 'CLJ', '1258', '1304'),
+        ]
+
+        actual = parser.calling_points(location_info)
+        self.assertEqual(3, len(actual))
+        self.assertEqual(expected, actual)
 
 
 if __name__ == '__main__':
