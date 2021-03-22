@@ -26,7 +26,7 @@ class StationData:
 
             self.station = parser.station_information(self.data)
             self.services = parser.all_services(self.data)
-            updated_callback()
+            updated_callback(self.__station_code)
 
 
 class ServiceData:
