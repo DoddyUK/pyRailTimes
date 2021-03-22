@@ -114,6 +114,9 @@ class _Renderer:
 
         self.__window.addstr(7, 0, message)
 
+    def clear_additional_service_row(self):
+        self.__window.addstr(7, 0, self.blank_row())
+
 
     def commit(self):
         self.__window.refresh()
@@ -207,13 +210,13 @@ class Board:
 
             if not services:
                 self.__renderer.show_no_departures()
-                self.__renderer.commit()
+                self.__renderer.clear_additional_service_row()
             else:
                 self.__renderer.update_primary_departure(self.__services[0])
+                self.__additional_services.set_services(services)
+                index, service = self.__additional_services.get() if redraw is True else self.__additional_services.get_and_advance()
+                self.__renderer.update_additional_service_row(index, service)
 
-            self.__additional_services.set_services(services)
-            index, service = self.__additional_services.get() if redraw is True else self.__additional_services.get_and_advance()
-            self.__renderer.update_additional_service_row(index, service)
             self.__renderer.commit()
 
     def update_service_calling_points(self, calling_points):
@@ -239,9 +242,14 @@ class Board:
             self.__renderer.commit()
 
     def advance_destinations(self):
-        index, service = self.__additional_services.get_and_advance()
-        self.__renderer.update_additional_service_row(index, service)
-        self.__renderer.commit()
+        if self.__services:
+            index, service = self.__additional_services.get_and_advance()
+            self.__renderer.update_additional_service_row(index, service)
+            self.__renderer.commit()
+
+        else:
+            self.__renderer.clear_additional_service_row()
+
 
     def redraw(self):
         self.draw_box()
