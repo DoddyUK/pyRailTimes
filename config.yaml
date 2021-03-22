@@ -3,7 +3,8 @@
 
 stations:
   - { code: SOU, platform: 1 }
-  - { code: WAT, platform: 4 }
+  - { code: SOU, platform: 4 }
+  - { code: STP, platform: A }
 
 # Width of departure boards. Minimum is 48
 board_width: 60

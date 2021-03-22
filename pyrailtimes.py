@@ -33,7 +33,8 @@ class PyRailTimes:
                 self.__boards[config_station.code] = dict()
 
             # TODO calculate board positions based on available terminal size
-            self.__boards[config_station.code][config_station.platform] = Board((self.__board_count * 10) + 1, 0)
+            # We need to cast platform as a string i.e. in case we have platform 1a
+            self.__boards[config_station.code][str(config_station.platform)] = Board((self.__board_count * 10) + 1, 0)
             self.__board_count += 1
 
 
@@ -118,11 +119,17 @@ class PyRailTimes:
                 board.show_no_services()
 
             else:
-                board.update_services(data.services)
-                first_service = data.services[0]
+                # Filter by platform
+                platform_services = [service for service in data.services if service.platform == platform]
 
-                if first_service.serviceUid not in self.__services:
-                    self.__update_service_data(first_service, station_code, platform)
+                if not platform_services:
+                    board.show_no_services()
+                else:
+                    board.update_services(platform_services)
+                    first_service = platform_services[0]
+
+                    if first_service.serviceUid not in self.__services:
+                        self.__update_service_data(first_service, station_code, platform)
 
         self.__cleanup_services()
 
@@ -176,14 +183,6 @@ class PyRailTimes:
             schedule.run_pending()
             time.sleep(0.1)
 
-class ConfigTest:
-    __config = Config()
-
-    def print_stations(self):
-        for station in self.__config.stations:
-            print(station)
-
 # Entry point
 if __name__ == '__main__':
-    # ConfigTest().print_stations()
     curses.wrapper(PyRailTimes().mainloop())

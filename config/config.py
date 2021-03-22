@@ -14,8 +14,6 @@ class Config:
 
     def __init__(self):
         config_yaml = self.__load()
-        print(config_yaml)
-        print(config_yaml.get('stations'))
         self.stations = map(_to_config_station, config_yaml.get('stations'))
 
         # Display board rendering config

@@ -8,3 +8,4 @@ class Service:
     departureTime: str
     destination: str
     expectedTime: str
+    platform: str

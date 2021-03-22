@@ -10,10 +10,6 @@ def station_information(data):
 def all_services(data):
     return __services(data)
 
-def filter_by_platform(data, platform):
-    # TODO
-    return ""
-
 def calling_points(data):
     out = []
 
@@ -21,8 +17,8 @@ def calling_points(data):
         calling_point = CallingPoint(
             location['description'],
             location['crs'],
-            location['gbttBookedArrival'] if 'gbttBookedArrival' in location else location['gbttBookedDeparture'],
-            location['realtimeArrival'] if 'realtimeArrival' in location else location['realtimeDeparture']
+            __optional(location, 'gbttBookedArrival', __optional(location, 'gbttBookedDeparture', "Unknown")),
+            __optional(location, 'realtimeArrival', __optional(location, 'realtimeDeparture', "Unknown"))
         )
         out.append(calling_point)
 
@@ -40,8 +36,12 @@ def __services(data):
                 datetime.datetime.strptime(service['runDate'], "%Y-%m-%d").date(),
                 location['gbttBookedDeparture'],
                 location['destination'][0]['description'],
-                location['realtimeDeparture'] if 'realtimeDeparture' in location else "----"  # Replacement buses do not have real time info
+                __optional(location, 'realtimeDeparture', "----"),
+                __optional(location, 'platform', "")
             )
             out.append(train)
 
     return out
+
+def __optional(data, key, default):
+    return data[key] if key in data else default
