@@ -41,6 +41,7 @@ class _Renderer:
         for row, text in enumerate(out):
             self.__window.addstr(row, 0, text)
 
+        self.update_time()
         self.__window.refresh()
 
     def update_station_name(self, station_name, platform):
@@ -154,14 +155,15 @@ class _AdditionalServiceFlipper:
             self.__services = services[1:self.__config.additional_services]
 
     def get_and_advance(self):
+        pair = self.get()
+        self.__advance_counter()
+        return pair
+
+    def get(self):
         if not self.__services:
             return -1, None
         else:
-            service = self.__services[self.__counter]
-            index = 2 + self.__counter
-            self.__advance_counter()
-
-            return index, service
+            return 2 + self.__counter, self.__services[self.__counter]
 
     def __advance_counter(self):
         self.__counter += 1
@@ -198,9 +200,9 @@ class Board:
         self.__renderer.update_station_name(station.name, platform)
         self.__renderer.commit()
 
-    def update_services(self, services):
+    def update_services(self, services, redraw=False):
         # Only update the board if we have new info
-        if services != self.__services:
+        if services != self.__services or redraw is True:
             self.__services = services
 
             if not services:
@@ -209,10 +211,10 @@ class Board:
             else:
                 self.__renderer.update_primary_departure(self.__services[0])
 
-                self.__additional_services.set_services(services)
-                index, service = self.__additional_services.get_and_advance()
-                self.__renderer.update_additional_service_row(index, service)
-                self.__renderer.commit()
+            self.__additional_services.set_services(services)
+            index, service = self.__additional_services.get() if redraw is True else self.__additional_services.get_and_advance()
+            self.__renderer.update_additional_service_row(index, service)
+            self.__renderer.commit()
 
     def update_service_calling_points(self, calling_points):
         stations_togo = []
@@ -246,5 +248,6 @@ class Board:
 
         if self.__station != "" and self.__platform != "":
             self.__renderer.update_station_name(self.__station.name, self.__platform)
+            self.update_services(self.__services if self.__services else [], True)
 
 
