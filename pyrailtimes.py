@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import datetime
 import curses
 import schedule
 
@@ -117,20 +116,27 @@ class PyRailTimes:
 
                 board.update_services(data.services)
 
-                # if station_code not in self.__services:
-                #     self.__update_service_data(first_service)
-                #
-                # elif self.__services[station_code].service_uid != first_service.serviceUid:
-                #     self.__update_service_data(first_service)
+                if station_code not in self.__services:
+                    self.__update_service_data(first_service, station_code, platform)
+
+                elif self.__services[station_code][platform].service_uid != first_service.serviceUid:
+                    self.__update_service_data(first_service, station_code, platform)
 
 
-    def __update_service_data(self, service):
-        service_data = ServiceData(service.serviceUid, service.runDate, lambda data: self.__on_service_update(data))
+    def __update_service_data(self, service, station_code, platform):
+        service_data = ServiceData(
+            service.serviceUid,
+            service.runDate,
+            lambda data: self.__on_service_update(data, station_code, platform)
+
+        )
+        if station_code not in self.__services:
+            self.__services[station_code] = dict
         self.__services[self.__config.stations] = service_data
 
-    def __on_service_update(self, service_data):
-        for board in self.__boards:
-            board.update_service_calling_points(service_data.calling_points)
+    def __on_service_update(self, service_data, station_code, platform):
+        board = self.__boards[station_code][platform]
+        board.update_service_calling_points(service_data.calling_points, station_code)
 
     #
     # Main program loop

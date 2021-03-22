@@ -219,11 +219,11 @@ class Board:
 
             self.__renderer.commit()
 
-    def update_service_calling_points(self, calling_points):
+    def update_service_calling_points(self, calling_points, station_code):
         stations_togo = []
 
         for index, value in enumerate(calling_points):
-            if value.code == self.__config.station and index + 1 < len(calling_points):
+            if value.code == station_code and index + 1 < len(calling_points):
                 stations_togo = calling_points[(index + 1):]
                 break
 
