@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import curses
+
+import datetime
 import schedule
 
 from display.board import Board
@@ -19,6 +21,8 @@ class PyRailTimes:
     __cols = 0
 
     __board_count = 0
+
+    __last_update = datetime.datetime.now()
 
     def __init__(self):
         for config_station in self.__config.stations:
@@ -40,10 +44,10 @@ class PyRailTimes:
         title = "pyRailTimes"
         self.__stdscr.addstr(0, max(0, self.__cols - len(title)), title)
 
-        # if self.__station_data and self.__station_data.values().last_update is not None:
-        #     update = "Last update: {}".format(
-        #         datetime.datetime.strftime(self.__station_data[0].last_update, "%H:%M:%S"))
-        #     self.__stdscr.addstr(1, max(0, self.__cols - len(update)), update)
+        update = "Last update: {}".format(
+            datetime.datetime.strftime(self.__last_update, "%H:%M:%S")
+        )
+        self.__stdscr.addstr(1, max(0, self.__cols - len(update)), update)
 
     #
     # Resize handlers
@@ -63,8 +67,9 @@ class PyRailTimes:
         self.__print_header()
         self.__stdscr.refresh()
 
-        for board in self.__boards:
-            board.redraw()
+        for station_boards in self.__boards.values():
+            for board in station_boards.values():
+                board.redraw()
 
     #
     # Departure Board handlers
@@ -99,6 +104,7 @@ class PyRailTimes:
 
     def __on_station_update(self, station_code):
         # Update "last updated" message
+        self.__last_update = datetime.datetime.now()
         self.__print_header()
 
         data = self.__station_data[station_code]
@@ -112,27 +118,36 @@ class PyRailTimes:
                 board.show_no_services()
 
             else:
+                board.update_services(data.services)
                 first_service = data.services[0]
 
-                board.update_services(data.services)
-
-                if station_code not in self.__services:
+                if first_service.serviceUid not in self.__services:
                     self.__update_service_data(first_service, station_code, platform)
 
-                elif self.__services[station_code][platform].service_uid != first_service.serviceUid:
-                    self.__update_service_data(first_service, station_code, platform)
+        self.__cleanup_services()
 
+    def __cleanup_services(self):
+        """
+        Cleans up the list of service calling points so we don't have any memory issues
+        """
+        current_services = dict()
+
+        for service_uid in self.__services.keys():
+            for station_data in self.__station_data.values():
+                if station_data.services:
+                    if station_data.services[0].serviceUid == service_uid:
+                        current_services[service_uid] = self.__services[service_uid]
+
+        self.__services = current_services
 
     def __update_service_data(self, service, station_code, platform):
         service_data = ServiceData(
             service.serviceUid,
             service.runDate,
             lambda data: self.__on_service_update(data, station_code, platform)
-
         )
-        if station_code not in self.__services:
-            self.__services[station_code] = dict
-        self.__services[self.__config.stations] = service_data
+
+        self.__services[service.serviceUid] = service_data
 
     def __on_service_update(self, service_data, station_code, platform):
         board = self.__boards[station_code][platform]
