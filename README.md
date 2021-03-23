@@ -19,9 +19,9 @@ Pip requirements are outlines in `requirements.txt`
 Run `python3 ./TrainDepartures.py`. Use `ctrl + C` to stop the script.
 
 ## TODO
-* Filter departures by platform
+* Arrange boards to make use of available width
 * Add CANCELLED status
-* Allow for multiple, configurable boards to be displayed at the same time.
+* Take bus replacement services into account
 
 ## Other notes
 
