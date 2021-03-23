@@ -123,13 +123,12 @@ class _Renderer:
         self.__window.refresh()
 
 
-class _AdditionalServiceFlipper:
+class AdditionalServiceFlipper:
     __services = []
     __counter = 0
 
-    def __init__(self, config, renderer):
+    def __init__(self, config):
         self.__config = config
-        self.__renderer = renderer
 
     def set_services(self, services):
         if len(services) < 2 or self.__config.additional_services < 1:
@@ -172,7 +171,7 @@ class Board:
         self.__left = left
         self.__renderer = _Renderer(self.__config, top, left)
         self.__dest_ticker = Ticker(self.__config)
-        self.__additional_services = _AdditionalServiceFlipper(self.__config, self.__renderer)
+        self.__additional_services = AdditionalServiceFlipper(self.__config)
 
     def draw_box(self):
         self.__renderer.draw_box("Loading...", "--")
