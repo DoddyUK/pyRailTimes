@@ -1,6 +1,7 @@
 import datetime
 import curses
 from config.config import Config
+from display.ticker import Ticker
 
 def _format_calling_points(calling_points):
     # Concat
@@ -122,27 +123,6 @@ class _Renderer:
         self.__window.refresh()
 
 
-class _Ticker:
-    __message = ""
-    __counter = 0
-
-    def __init__(self, config, renderer):
-        self.__config = config
-        self.__renderer = renderer
-
-    def set_message(self, message):
-        self.__message = "{:>{width}}".format(message, width=(self.__config.board_width + len(message)))
-        self.__counter = 0
-
-    def get_and_advance(self):
-        out = self.__message[self.__counter:(self.__counter + self.__config.board_width - 4)]
-        self.__counter += 1
-        if self.__counter >= len(self.__message):
-            self.__counter = 0
-
-        return out
-
-
 class _AdditionalServiceFlipper:
     __services = []
     __counter = 0
@@ -191,7 +171,7 @@ class Board:
         self.__top = top
         self.__left = left
         self.__renderer = _Renderer(self.__config, top, left)
-        self.__dest_ticker = _Ticker(self.__config, self.__renderer)
+        self.__dest_ticker = Ticker(self.__config)
         self.__additional_services = _AdditionalServiceFlipper(self.__config, self.__renderer)
 
     def draw_box(self):

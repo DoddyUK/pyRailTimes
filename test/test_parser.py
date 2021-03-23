@@ -26,7 +26,8 @@ class TestParser(unittest.TestCase):
                         'destination': [
                             { 'description': 'London Waterloo' }
                         ],
-                        'realtimeDeparture': '1140'
+                        'realtimeDeparture': '1140',
+                        'platform': '1'
                     }
                 },
                 {
@@ -38,7 +39,8 @@ class TestParser(unittest.TestCase):
                         'destination': [
                             {'description': 'Basingstoke'}
                         ],
-                        'realtimeDeparture': '1202'
+                        'realtimeDeparture': '1202',
+                        'platform': '2'
                     }
                 },
             ]
@@ -47,8 +49,8 @@ class TestParser(unittest.TestCase):
         actual = parser.all_services(service_info)
 
         expected = [
-            Service('a1234b', datetime.date(2021, 3, 21), '1140', 'London Waterloo', '1140'),
-            Service('a5678c', datetime.date(2021, 3, 21), '1157', 'Basingstoke', '1202')
+            Service('a1234b', datetime.date(2021, 3, 21), '1140', 'London Waterloo', '1140', '1'),
+            Service('a5678c', datetime.date(2021, 3, 21), '1157', 'Basingstoke', '1202', '2')
         ]
 
         self.assertListEqual(expected, actual)
@@ -68,7 +70,8 @@ class TestParser(unittest.TestCase):
                         'gbttBookedDeparture': '1140',
                         'destination': [
                             {'description': 'London Waterloo'}
-                        ]
+                        ],
+                        'platform': '1'
                     }
                 }
             ]
@@ -77,7 +80,7 @@ class TestParser(unittest.TestCase):
         actual = parser.all_services(service_info)
 
         expected = [
-            Service('a1234b', datetime.date(2021, 3, 21), '1140', 'London Waterloo', '----')
+            Service('a1234b', datetime.date(2021, 3, 21), '1140', 'London Waterloo', '----', '1')
         ]
 
         self.assertListEqual(expected, actual)
