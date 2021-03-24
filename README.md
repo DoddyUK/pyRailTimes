@@ -1,5 +1,7 @@
 # pyRailTimes README
 
+[![CI](https://github.com/DoddyUK/pyRailTimes/actions/workflows/run_tests.yml/badge.svg?branch=master)](https://github.com/DoddyUK/pyRailTimes/actions/workflows/run_tests.yml)
+
 pyRailTimes is a command line program that displays a departure board for a given UK railway station,
 similar to those seen on platforms. 
 
