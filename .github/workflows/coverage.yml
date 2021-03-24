@@ -1,8 +1,8 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Unit Tests
+name: Coverage
 
-# Controls when the action will run. 
+# Controls when the action will run.
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
@@ -27,4 +27,4 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Run Python unit tests
-        run: coverage run -m unittest discover -v
+        run: coverage report
