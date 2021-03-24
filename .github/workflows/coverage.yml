@@ -27,7 +27,7 @@ jobs:
 
       # Install coverage module
       - name: Install coverage
-        run: pip install coverage
+        run: pip3 install coverage
 
       # Runs a single command using the runners shell
       - name: Run Python unit tests
