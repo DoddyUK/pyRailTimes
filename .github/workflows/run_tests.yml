@@ -25,10 +25,6 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      # Install coverage module
-      - name: Install coverage
-        run: pip3 install coverage
-
       # Runs a single command using the runners shell
       - name: Run Python unit tests
-        run: coverage run -m unittest discover -v
+        run: run -m unittest discover -v

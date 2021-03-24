@@ -1,4 +1,3 @@
-coverage
 dataclasses
 PyYAML
 requests
