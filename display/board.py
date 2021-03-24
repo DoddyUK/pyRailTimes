@@ -122,9 +122,6 @@ class _Renderer:
     def commit(self):
         self.__window.refresh()
 
-    def blah(self):
-        return "Blah"
-
 
 class AdditionalServiceFlipper:
     __services = []
@@ -239,8 +236,3 @@ class Board:
         if self.__station != "" and self.__platform != "":
             self.__renderer.update_station_name(self.__station.name, self.__platform)
             self.update_services(self.__services if self.__services else [], True)
-
-    def blah(self):
-        return self.__renderer.blah()
-
-
