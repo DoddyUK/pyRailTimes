@@ -1,5 +1,5 @@
 # Configuration file for TrainDepartures
-# Use to add your own home station and platforms
+# Use to add your own home station_name and platforms
 
 stations:
   - { code: SOU, platform: 1 }

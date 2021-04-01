@@ -1,20 +1,22 @@
 import datetime
 import curses
+from rttapi.model import Location, LocationContainer
 from config.config import Config
 from display.ticker import Ticker
+from typing import List
 
-def _format_calling_points(calling_points):
+def _format_calling_points(calling_points: List[Location]):
     # Concat
     call_str = "Calling at: "
 
     if len(calling_points) == 1:
-        call_str += "{} ({}) only.".format(calling_points[0].description, calling_points[0].real_arrival)
+        call_str += "{} ({}) only.".format(calling_points[0].destination, calling_points[0].gbtt_booked_departure)
     else :
         for point in calling_points:
             if point == calling_points[-1]:
-                call_str += "and {} ({})".format(point.description, point.real_arrival)
+                call_str += "and {} ({})".format(point.description, point.gbtt_booked_departure)
             else:
-                call_str += "{} ({}), ".format(point.description, point.real_arrival)
+                call_str += "{} ({}), ".format(point.description, point.gbtt_booked_departure)
 
     return call_str
 
@@ -54,8 +56,14 @@ class _Renderer:
         self.__window.addstr(6, 0, self.blank_row())
         self.__window.addstr(7, 0, self.blank_row())
 
-    def update_primary_departure(self, service):
-        self.__window.addstr(4, 0, self.board_row(1, service.departureTime, service.destination, service.expectedTime))
+    def update_primary_departure(self, service: Location):
+        self.__window.addstr(4, 0,
+             self.board_row(1,
+                            service.gbtt_booked_departure,
+                            service.destination[0].description,
+                            service.realtime_departure
+                            )
+             )
 
     def update_ticker_row(self, message):
         self.__window.addstr(5, 0, self.left_message(message))
@@ -67,6 +75,7 @@ class _Renderer:
         return "│ {:{width}} │".format(message, width=self.__config.board_width - 4)
 
     def board_row(self, order, time, destination, expected):
+        # TODO Multiple destinations for splitting trains (e.g. A & B)
         return "│ {:<3}{:4>}  {:{width}} {:>8} │".format(
             order,
             time,
@@ -90,9 +99,13 @@ class _Renderer:
             )
 
 
-    def service_row(self, index, service):
-        expected = "On Time" if (service.expectedTime == service.departureTime) else service.expectedTime
-        return self.board_row(index, service.departureTime, service.destination, expected)
+    def service_row(self, index, service: LocationContainer):
+        if service.location_detail.realtime_departure == service.location_detail.gbtt_booked_departure:
+            expected = "On Time"
+        else:
+            expected = service.location_detail.realtime_departure
+
+        return self.board_row(index, service.location_detail.realtime_departure, service.location_detail.destination[0].description, expected)
 
     def blank_row(self):
         return self.message(" ")
@@ -107,7 +120,7 @@ class _Renderer:
         )
         self.__window.addstr(8, 0, time_row)
 
-    def update_additional_service_row(self, index, service):
+    def update_additional_service_row(self, index, service: LocationContainer):
         if not service:
             message = self.message("*** No additional departures ***")
         else:
@@ -130,7 +143,7 @@ class AdditionalServiceFlipper:
     def __init__(self, config):
         self.__config = config
 
-    def set_services(self, services):
+    def set_services(self, services: List[Location]):
         if len(services) < 2 or self.__config.additional_services < 1:
             self.__services = []
         else:
@@ -179,7 +192,7 @@ class Board:
     def set_station(self, station, platform):
         self.__station = station
         self.__platform = platform
-        self.__renderer.update_station_name(station.name, platform)
+        self.__renderer.update_station_name(station, platform)
         self.__renderer.commit()
 
     def update_services(self, services, redraw=False):
@@ -191,18 +204,18 @@ class Board:
                 self.__renderer.show_no_departures()
                 self.__renderer.clear_additional_service_row()
             else:
-                self.__renderer.update_primary_departure(self.__services[0])
+                self.__renderer.update_primary_departure(self.__services[0].location_detail)
                 self.__additional_services.set_services(services)
                 index, service = self.__additional_services.get() if redraw is True else self.__additional_services.get_and_advance()
                 self.__renderer.update_additional_service_row(index, service)
 
             self.__renderer.commit()
 
-    def update_service_calling_points(self, calling_points, station_code):
+    def update_service_calling_points(self, calling_points: List[Location], station_code):
         stations_togo = []
 
         for index, value in enumerate(calling_points):
-            if value.code == station_code and index + 1 < len(calling_points):
+            if value.crs == station_code and index + 1 < len(calling_points):
                 stations_togo = calling_points[(index + 1):]
                 break
 
@@ -234,5 +247,5 @@ class Board:
         self.draw_box()
 
         if self.__station != "" and self.__platform != "":
-            self.__renderer.update_station_name(self.__station.name, self.__platform)
+            self.__renderer.update_station_name(self.__station, self.__platform)
             self.update_services(self.__services if self.__services else [], True)
