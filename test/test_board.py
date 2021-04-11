@@ -2,9 +2,37 @@ import unittest
 import datetime
 from unittest.mock import patch
 from display.board import Board
-from model.calling_point import CallingPoint
-from model.station import Station
-from model.service import Service
+from rttapi.model  import Location, LocationContainer, Pair
+
+
+def _define_location(tiploc, description, working_time, public_time):
+    out = Location()
+    out.tiploc = tiploc
+    out.description = description
+    out.working_time = working_time
+    out.public_time = public_time
+
+    return out
+
+def _define_service(service_uid, service_date: datetime.date, departure_time, destination_description, arrival_time, platform):
+    destination = Pair()
+    destination.description = destination_description
+    destination.public_time = arrival_time
+    destination.working_time = arrival_time
+
+    current_location = Location()
+    current_location.destination = destination
+    current_location.gbtt_booked_departure = departure_time
+    current_location.platform = platform
+
+    location_container = LocationContainer()
+    location_container.location_detail = current_location
+    location_container.service_uid = service_uid
+    location_container.run_date = service_date
+    location_container.locations = [current_location]
+
+    return location_container
+
 
 @patch("config.config.Config")
 @patch("display.board._Renderer")
@@ -25,7 +53,7 @@ class TestBoard(unittest.TestCase):
 
     def test_set_station(self, mock_renderer, mock_config):
         # Given
-        station = Station("Clapham Junction", "CLJ")
+        station = "Clapham Junction"
         platform = "7"
         renderer = mock_renderer.return_value
         under_test = Board(0, 0)
@@ -34,7 +62,7 @@ class TestBoard(unittest.TestCase):
         under_test.set_station(station, platform)
 
         # Verify
-        renderer.update_station_name.assert_called_with(station.name, platform)
+        renderer.update_station_name.assert_called_with(station, platform)
         renderer.commit.assert_called()
         mock_config.return_value.assert_not_called()
 
@@ -70,11 +98,11 @@ class TestBoard(unittest.TestCase):
         # Given
         renderer = mock_renderer.return_value
         under_test = Board(0, 0)
-        station = Station("Clapham Junction", "CLJ")
+        station = "Clapham Junction"
         platform = "7"
         services = [
-            Service('a1234b', datetime.date(2021, 3, 21), '1140', 'London Waterloo', '1140', '1'),
-            Service('a5678c', datetime.date(2021, 3, 21), '1157', 'Basingstoke', '1202', '2')
+            _define_service('a1234b', datetime.date(2021, 3, 21), '1140', 'London Waterloo', '1140', '1'),
+            _define_service('a5678c', datetime.date(2021, 3, 21), '1157', 'Basingstoke', '1202', '2')
         ]
 
         # When
@@ -83,8 +111,8 @@ class TestBoard(unittest.TestCase):
         under_test.redraw()
 
         # Verify
-        renderer.update_station_name.assert_called_with(station.name, platform)
-        renderer.update_primary_departure.assert_called_with(services[0])
+        renderer.update_station_name.assert_called_with(station, platform)
+        renderer.update_primary_departure.assert_called_with(services[0].location_detail)
         renderer.update_additional_service_row.assert_called()
         renderer.commit.assert_called()
         mock_config.return_value.assert_not_called()
@@ -93,7 +121,7 @@ class TestBoard(unittest.TestCase):
         # Given
         renderer = mock_renderer.return_value
         under_test = Board(0, 0)
-        station = Station("Clapham Junction", "CLJ")
+        station = "Clapham Junction"
         platform = "7"
         services = []
 
@@ -103,7 +131,7 @@ class TestBoard(unittest.TestCase):
         under_test.redraw()
 
         # Verify
-        renderer.update_station_name.assert_called_with(station.name, platform)
+        renderer.update_station_name.assert_called_with(station, platform)
         renderer.show_no_departures.assert_called()
         renderer.clear_additional_service_row.assert_called()
         renderer.commit.assert_called()
@@ -114,11 +142,11 @@ class TestBoard(unittest.TestCase):
         # Given
         renderer = mock_renderer.return_value
         under_test = Board(0, 0)
-        station = Station("Clapham Junction", "CLJ")
+        station = "Clapham Junction"
         platform = "7"
         services = [
-            Service('a1234b', datetime.date(2021, 3, 21), '1140', 'London Waterloo', '1140', '1'),
-            Service('a5678c', datetime.date(2021, 3, 21), '1157', 'Basingstoke', '1202', '2')
+            _define_service('a1234b', datetime.date(2021, 3, 21), '1140', 'London Waterloo', '1140', '1'),
+            _define_service('a5678c', datetime.date(2021, 3, 21), '1157', 'Basingstoke', '1202', '2')
         ]
 
         # When
@@ -135,7 +163,7 @@ class TestBoard(unittest.TestCase):
         # Given
         renderer = mock_renderer.return_value
         under_test = Board(0, 0)
-        station = Station("Clapham Junction", "CLJ")
+        station = "Clapham Junction"
         platform = "7"
         services = []
 
@@ -157,11 +185,10 @@ class TestBoard(unittest.TestCase):
             under_test = Board(0, 0)
 
             calling_points = [
-                CallingPoint('Woking', 'WOK', '1202', '1202'),
-                CallingPoint('Clapham Junction', 'CLJ', '1227', '1227'),
-                CallingPoint('Vauxhall', 'VXH', '1235', '1235'),
-                CallingPoint('London Waterloo', 'WAT', '1240', '1241'),
-
+                _define_location('Woking', 'WOK', '1202', '1202'),
+                _define_location('Clapham Junction', 'CLJ', '1227', '1227'),
+                _define_location('Vauxhall', 'VXH', '1235', '1235'),
+                _define_location('London Waterloo', 'WAT', '1240', '1241'),
             ]
 
             # When
