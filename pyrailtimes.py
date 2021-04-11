@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import curses
-
 import datetime
 import schedule
 
@@ -12,16 +11,18 @@ import time
 
 class PyRailTimes:
     __services = dict()
-    __station_data = dict()
+    __station_data = dict() # (station_name code / StationData)
     __boards = dict()
 
     __config = Config()
 
+    # Dimensions of the current terminal window
     __rows = 0
     __cols = 0
 
     __board_count = 0
 
+    # Time of the last API update
     __last_update = datetime.datetime.now()
 
     def __init__(self):
@@ -37,11 +38,13 @@ class PyRailTimes:
             self.__boards[config_station.code][str(config_station.platform)] = Board((self.__board_count * 10) + 1, 0)
             self.__board_count += 1
 
-
         self.__stdscr = curses.initscr()
         self.__update_size()
 
     def __print_header(self):
+        """
+        Print the app title and time in the top right corner
+        """
         title = "pyRailTimes"
         self.__stdscr.addstr(0, max(0, self.__cols - len(title)), title)
 
@@ -55,6 +58,9 @@ class PyRailTimes:
     #
 
     def __update_size(self):
+        """
+        Update the known height and width of the window
+        """
         self.__rows, self.__cols = self.__stdscr.getmaxyx()
 
     def __handle_resize(self):
@@ -76,6 +82,9 @@ class PyRailTimes:
     # Departure Board handlers
     #
     def __setup_schedules(self):
+        """
+        Recurring events for the departure board
+        """
         schedule.every(0.5).seconds.do(self.__update_board_times)
         schedule.every(0.1).seconds.do(self.__advance_board_tickers)
         schedule.every(5).seconds.do(self.__advance_board_destinations)
@@ -108,11 +117,11 @@ class PyRailTimes:
         self.__last_update = datetime.datetime.now()
         self.__print_header()
 
-        data = self.__station_data[station_code]
+        data: StationData = self.__station_data[station_code]
         boards = self.__boards[station_code]
 
         for platform, board in boards.items():
-            board.set_station(data.station, platform)
+            board.set_station(data.data.location.name, platform)
             self.__stdscr.refresh()
 
             if not data.services:
@@ -120,7 +129,7 @@ class PyRailTimes:
 
             else:
                 # Filter by platform
-                platform_services = [service for service in data.services if service.platform == platform]
+                platform_services = [service for service in data.services if service.location_detail.platform == platform]
 
                 if not platform_services:
                     board.show_no_services()
@@ -128,7 +137,7 @@ class PyRailTimes:
                     board.update_services(platform_services)
                     first_service = platform_services[0]
 
-                    if first_service.serviceUid not in self.__services:
+                    if first_service.service_uid not in self.__services:
                         self.__update_service_data(first_service, station_code, platform)
 
         self.__cleanup_services()
@@ -142,19 +151,19 @@ class PyRailTimes:
         for service_uid in self.__services.keys():
             for station_data in self.__station_data.values():
                 if station_data.services:
-                    if station_data.services[0].serviceUid == service_uid:
+                    if station_data.services[0].service_uid == service_uid:
                         current_services[service_uid] = self.__services[service_uid]
 
         self.__services = current_services
 
     def __update_service_data(self, service, station_code, platform):
         service_data = ServiceData(
-            service.serviceUid,
-            service.runDate,
+            service.service_uid,
+            service.run_date,
             lambda data: self.__on_service_update(data, station_code, platform)
         )
 
-        self.__services[service.serviceUid] = service_data
+        self.__services[service.service_uid] = service_data
 
     def __on_service_update(self, service_data, station_code, platform):
         board = self.__boards[station_code][platform]

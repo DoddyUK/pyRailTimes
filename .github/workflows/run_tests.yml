@@ -25,6 +25,10 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
+      # Install PIP requirements
+      - name: Install PIP requirements
+        run: pip install -r requirements.txt
+
       # Runs a single command using the runners shell
       - name: Run Python unit tests
         run: python3 -m unittest discover -v
